@@ -1,23 +1,23 @@
 # ============================================================================
-# GCS Bucket - Main
-# Provisions a Google Cloud Storage bucket via the terraform-google-module-template module.
+# GCS Bucket Module - Main
+# Creates and manages a Google Cloud Storage bucket.
 # ============================================================================
 
-module "gcs_bucket" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-google-module-template"
+resource "google_storage_bucket" "this" {
+  name                        = var.bucket_name
+  project                     = var.project_id
+  location                    = var.location
+  storage_class               = upper(var.storage_class)
+  force_destroy               = var.force_destroy
+  uniform_bucket_level_access = true
+  public_access_prevention    = "enforced"
 
-  gcs_config = {
-    bucket_name                 = var.bucket_name
-    project_id                  = var.project_id
-    location                    = var.location
-    storage_class               = var.storage_class
-    force_destroy               = var.force_destroy
-    uniform_bucket_level_access = true
-    public_access_prevention    = "enforced"
-    versioning                  = var.versioning
-    labels = merge(var.labels, {
-      project     = var.project
-      environment = var.environment
-    })
+  labels = merge(var.labels, {
+    project     = var.project
+    environment = var.environment
+  })
+
+  versioning {
+    enabled = var.versioning
   }
 }

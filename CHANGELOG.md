@@ -9,6 +9,7 @@
 ### 🚜 Refactor
 
 - Simplify GCS bucket test configuration by removing unnecessary nested structure
+- Restructure GCS bucket module by removing unnecessary module wrapper and updating output references
 
 ### 📚 Documentation
 

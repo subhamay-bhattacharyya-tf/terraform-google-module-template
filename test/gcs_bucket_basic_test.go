@@ -24,11 +24,9 @@ func TestGCSBucketBasic(t *testing.T) {
 		TerraformDir: "..",
 		NoColor:      true,
 		Vars: map[string]interface{}{
-			"gcs_config": map[string]interface{}{
-				"bucket_name": bucketName,
-				"project_id":  projectID,
-				"location":    "US",
-			},
+			"bucket_name": bucketName,
+			"project_id":  projectID,
+			"location":    "US",
 		},
 	}
 

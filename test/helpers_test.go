@@ -7,94 +7,60 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"cloud.google.com/go/storage"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/api/iterator"
 )
 
-type S3BucketProps struct {
-	Name              string
-	VersioningEnabled bool
-	SSEAlgorithm      string
-	KMSKeyID          string
-}
-
-func getS3Client(t *testing.T) *s3.Client {
-	t.Helper()
-
-	region := os.Getenv("AWS_REGION")
-	if region == "" {
-		region = "us-east-1"
-	}
-
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
-	require.NoError(t, err, "Failed to load AWS config")
-
-	return s3.NewFromConfig(cfg)
-}
-
-func bucketExists(t *testing.T, client *s3.Client, bucketName string) bool {
-	t.Helper()
-
-	_, err := client.HeadBucket(context.TODO(), &s3.HeadBucketInput{
-		Bucket: &bucketName,
-	})
-
-	return err == nil
-}
-
-func fetchBucketProps(t *testing.T, client *s3.Client, bucketName string) S3BucketProps {
-	t.Helper()
-
-	props := S3BucketProps{Name: bucketName}
-
-	// Check versioning
-	versioningOutput, err := client.GetBucketVersioning(context.TODO(), &s3.GetBucketVersioningInput{
-		Bucket: &bucketName,
-	})
-	require.NoError(t, err, "Failed to get bucket versioning")
-	props.VersioningEnabled = versioningOutput.Status == types.BucketVersioningStatusEnabled
-
-	// Check encryption
-	encryptionOutput, err := client.GetBucketEncryption(context.TODO(), &s3.GetBucketEncryptionInput{
-		Bucket: &bucketName,
-	})
-	if err == nil && len(encryptionOutput.ServerSideEncryptionConfiguration.Rules) > 0 {
-		rule := encryptionOutput.ServerSideEncryptionConfiguration.Rules[0]
-		if rule.ApplyServerSideEncryptionByDefault != nil {
-			props.SSEAlgorithm = string(rule.ApplyServerSideEncryptionByDefault.SSEAlgorithm)
-			if rule.ApplyServerSideEncryptionByDefault.KMSMasterKeyID != nil {
-				props.KMSKeyID = *rule.ApplyServerSideEncryptionByDefault.KMSMasterKeyID
-			}
-		}
-	}
-
-	return props
-}
-
-func listBucketObjects(t *testing.T, client *s3.Client, bucketName string) []string {
-	t.Helper()
-
-	output, err := client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
-		Bucket: &bucketName,
-	})
-	require.NoError(t, err, "Failed to list bucket objects")
-
-	var keys []string
-	for _, obj := range output.Contents {
-		if obj.Key != nil {
-			keys = append(keys, *obj.Key)
-		}
-	}
-	return keys
-}
-
+// mustEnv retrieves a required environment variable, failing the test if absent.
 func mustEnv(t *testing.T, key string) string {
 	t.Helper()
 	v := strings.TrimSpace(os.Getenv(key))
 	require.NotEmpty(t, v, "Missing required environment variable %s", key)
 	return v
+}
+
+// newGCSClient creates an authenticated GCS client.
+func newGCSClient(t *testing.T) *storage.Client {
+	t.Helper()
+	ctx := context.Background()
+	client, err := storage.NewClient(ctx)
+	require.NoError(t, err, "Failed to create GCS client")
+	return client
+}
+
+// bucketExists reports whether the named bucket is accessible.
+func bucketExists(t *testing.T, client *storage.Client, bucketName string) bool {
+	t.Helper()
+	ctx := context.Background()
+	_, err := client.Bucket(bucketName).Attrs(ctx)
+	return err == nil
+}
+
+// fetchBucketAttrs returns the GCS BucketAttrs for the named bucket.
+func fetchBucketAttrs(t *testing.T, client *storage.Client, bucketName string) *storage.BucketAttrs {
+	t.Helper()
+	ctx := context.Background()
+	attrs, err := client.Bucket(bucketName).Attrs(ctx)
+	require.NoError(t, err, "Failed to get bucket attributes for %s", bucketName)
+	return attrs
+}
+
+// listBucketObjects returns the object keys in the named bucket.
+func listBucketObjects(t *testing.T, client *storage.Client, bucketName string) []string {
+	t.Helper()
+	ctx := context.Background()
+	var keys []string
+	it := client.Bucket(bucketName).Objects(ctx, nil)
+	for {
+		obj, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		require.NoError(t, err, "Failed to list objects in bucket %s", bucketName)
+		keys = append(keys, obj.Name)
+	}
+	return keys
 }
 
 func stringPtr(s string) *string {

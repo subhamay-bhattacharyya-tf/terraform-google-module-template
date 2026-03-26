@@ -32,3 +32,13 @@ output "bucket_self_link" {
   description = "The self link of the bucket"
   value       = module.gcs_bucket.bucket_self_link
 }
+
+output "bucket_storage_class" {
+  description = "The storage class of the bucket"
+  value       = module.gcs_bucket.bucket_storage_class
+}
+
+output "bucket_force_destroy" {
+  description = "Whether force_destroy is enabled for the bucket"
+  value       = module.gcs_bucket.bucket_force_destroy
+}

@@ -3,22 +3,26 @@
 # Example: Basic GCS Bucket - Variables
 # ============================================================================
 
-variable "project_id" {
-  description = "Google Cloud project ID"
+variable "bucket_name" {
+  description = "Name of the GCS bucket."
   type        = string
+  default     = "my-portfolio-bucket"
 }
 
-variable "gcs" {
-  description = "GCS bucket configuration"
-  type = object({
-    bucket_name                 = string
-    project_id                  = optional(string, null)
-    location                    = optional(string, "US")
-    storage_class               = optional(string, "STANDARD")
-    force_destroy               = optional(bool, false)
-    uniform_bucket_level_access = optional(bool, true)
-    public_access_prevention    = optional(string, "enforced")
-    versioning                  = optional(bool, false)
-    labels                      = optional(map(string), {})
-  })
+variable "project_id" {
+  description = "GCP project ID."
+  type        = string
+  default     = "portfolio-site"
+}
+
+variable "region" {
+  description = "GCP region."
+  type        = string
+  default     = "us-central1"
+}
+
+variable "environment" {
+  description = "Environment label value."
+  type        = string
+  default     = "dev"
 }

@@ -61,3 +61,19 @@ provider "google" {
 **test/:**
 
 This folder should contain the test cases for the module. The test cases should be written in Go and should use the Terratest framework. The test cases should be able to create a real GCS bucket, assert the outputs, and destroy the bucket after the test is done.
+
+**package.json:**
+
+Ensure the name is always the repository name.
+
+**package-lock.json:**
+
+Ensure the name is always the repository name.
+
+**CONTRIBUTING.md:**
+
+Ensure in the CONTRIBUTING.md, Reporting Issues must always links to the current repository.
+
+**README.md:**
+
+The custom endpoint batch should always point to the `current repository`.json.

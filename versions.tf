@@ -1,7 +1,3 @@
-# -- versions.tf
-# ============================================================================
-# Terraform version and provider requirements
-# ============================================================================
 
 terraform {
   required_version = ">= 1.3.0"
@@ -15,4 +11,5 @@ terraform {
 }
 
 provider "google" {
+  region = var.region
 }
